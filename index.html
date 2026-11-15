@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#101722" />
+    <meta
+      name="description"
+      content="一個打開就會出現超出螢幕的訊息視窗。"
+    />
+    <title>訊息解析失敗</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC",
+          "PingFang TC", sans-serif;
+        background: #101722;
+        color: #f4f0e8;
+        font-synthesis: none;
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        --coral: #ff735f;
+        --cream: #f4f0e8;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        min-width: 320px;
+        min-height: 100vh;
+        margin: 0;
+        overflow: hidden;
+        background:
+          radial-gradient(ellipse at 18% 18%, #263247 0, transparent 38%),
+          radial-gradient(ellipse at 84% 82%, #28243c 0, transparent 34%),
+          #101722;
+      }
+
+      body::before {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        background-image: radial-gradient(#ffffff18 0.7px, transparent 0.7px);
+        background-size: 6px 6px;
+        content: "";
+        opacity: 0.13;
+        pointer-events: none;
+      }
+
+      .scene {
+        display: grid;
+        min-height: 100vh;
+        place-items: center;
+        overflow: hidden;
+      }
+
+      .status {
+        position: fixed;
+        top: 30px;
+        left: 32px;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #aeb8c9;
+        font: 600 11px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+
+      .status::before {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--coral);
+        box-shadow: 0 0 16px #ff735f99;
+        content: "";
+      }
+
+      .veil {
+        position: fixed;
+        inset: 0;
+        z-index: 2;
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+        background: #080d16a8;
+        animation: veil-in 450ms ease both;
+      }
+
+      .dialog {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        display: grid;
+        width: max(112vw, 900px);
+        height: max(116vh, 720px);
+        place-items: center;
+        padding: 48px;
+        overflow: hidden;
+        border: 1px solid #ffffff35;
+        border-radius: 44px;
+        background:
+          radial-gradient(ellipse at 20% 18%, #ffffff12, transparent 36%),
+          linear-gradient(145deg, #fb7b66 0%, #ed5d55 48%, #bd4351 100%);
+        box-shadow: 0 50px 140px #0009, inset 0 1px 0 #ffffff66;
+        color: #281a22;
+        text-align: center;
+        transform: translate(-50%, -50%) rotate(-3deg) scale(0.92);
+        animation: pop-in 720ms cubic-bezier(.18,.85,.22,1.1) 80ms both;
+      }
+
+      .dialog::before,
+      .dialog::after {
+        position: absolute;
+        width: 52vw;
+        height: 52vw;
+        min-width: 420px;
+        min-height: 420px;
+        border: 1px solid #ffffff30;
+        border-radius: 50%;
+        content: "";
+        pointer-events: none;
+      }
+
+      .dialog::before { top: -28vw; right: -8vw; }
+      .dialog::after { bottom: -33vw; left: -20vw; }
+
+      .dialog-content {
+        position: relative;
+        z-index: 1;
+        width: min(82vw, 920px);
+        padding: 28px 0;
+        transform: rotate(3deg);
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        margin-bottom: clamp(24px, 5vh, 48px);
+        padding: 11px 15px;
+        border: 1px solid #2b1d242e;
+        border-radius: 999px;
+        color: #35242b;
+        font: 700 11px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+        letter-spacing: 0.14em;
+      }
+
+      .eyebrow span {
+        display: inline-block;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #34212a;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(28px, 6.1vw, 76px);
+        font-weight: 900;
+        letter-spacing: 0.035em;
+        line-height: 1.55;
+        overflow-wrap: anywhere;
+        text-wrap: balance;
+      }
+
+      .message-line { display: block; }
+
+      .divider {
+        width: min(64px, 14vw);
+        height: 3px;
+        margin: clamp(22px, 4vh, 38px) auto;
+        border-radius: 99px;
+        background: #2c1d25a8;
+      }
+
+      .subline {
+        margin: 0;
+        color: #402a31c9;
+        font-size: clamp(13px, 1.4vw, 16px);
+        font-weight: 650;
+        letter-spacing: 0.18em;
+      }
+
+      .close {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 4;
+        display: grid;
+        width: 44px;
+        height: 44px;
+        padding: 0;
+        place-items: center;
+        border: 1px solid #ffffff55;
+        border-radius: 50%;
+        background: #101722b8;
+        color: var(--cream);
+        cursor: pointer;
+        font-size: 21px;
+        line-height: 1;
+        backdrop-filter: blur(12px);
+        transition: transform 160ms ease, background 160ms ease;
+      }
+
+      .close:hover { background: #263247; transform: rotate(90deg); }
+      .close:focus-visible, .reopen:focus-visible { outline: 3px solid white; outline-offset: 4px; }
+
+      .reopen {
+        position: relative;
+        z-index: 1;
+        padding: 14px 20px;
+        border: 1px solid #ffffff45;
+        border-radius: 999px;
+        background: #ffffff12;
+        color: var(--cream);
+        cursor: pointer;
+        font: inherit;
+      }
+
+      .is-hidden { display: none; }
+
+      @keyframes veil-in { from { opacity: 0; } to { opacity: 1; } }
+      @keyframes pop-in {
+        0% { opacity: 0; transform: translate(-50%, -50%) rotate(2deg) scale(.84); }
+        68% { opacity: 1; transform: translate(-50%, -50%) rotate(-4deg) scale(1.015); }
+        100% { opacity: 1; transform: translate(-50%, -50%) rotate(-3deg) scale(1); }
+      }
+
+      @media (max-width: 600px) {
+        .status { top: 20px; left: 18px; font-size: 9px; }
+        .dialog { width: max(132vw, 540px); height: max(118vh, 700px); border-radius: 34px; }
+        .dialog-content { width: 82vw; }
+        h1 { font-size: clamp(25px, 7vw, 40px); line-height: 1.7; }
+        .eyebrow { margin-bottom: 30px; }
+        .close { top: 14px; right: 14px; }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="scene">
+      <div class="status" aria-hidden="true">MESSAGE DECODER · 01</div>
+      <button class="reopen is-hidden" id="reopen" type="button">重新顯示訊息</button>
+
+      <div class="veil" id="veil">
+        <section
+          class="dialog"
+          id="dialog"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="message"
+        >
+          <div class="dialog-content">
+            <div class="eyebrow"><span></span>訊息解析失敗</div>
+            <h1 id="message">
+              <span class="message-line">ㄋㄧˇㄕㄨㄛㄕㄣˊㄇㄛ·，</span>
+              <span class="message-line">ㄨㄛˇㄎㄢˋㄅㄨˋㄉㄨㄥˇ</span>
+            </h1>
+            <div class="divider" aria-hidden="true"></div>
+            <p class="subline">請稍後再試 · 或直接說中文</p>
+          </div>
+        </section>
+        <button class="close" id="close" type="button" aria-label="關閉訊息">×</button>
+      </div>
+    </main>
+
+    <script>
+      const veil = document.querySelector('#veil')
+      const closeButton = document.querySelector('#close')
+      const reopenButton = document.querySelector('#reopen')
+
+      function closeMessage() {
+        veil.classList.add('is-hidden')
+        reopenButton.classList.remove('is-hidden')
+        reopenButton.focus()
+      }
+
+      function openMessage() {
+        veil.classList.remove('is-hidden')
+        reopenButton.classList.add('is-hidden')
+        closeButton.focus()
+      }
+
+      closeButton.addEventListener('click', closeMessage)
+      reopenButton.addEventListener('click', openMessage)
+      veil.addEventListener('click', (event) => {
+        if (event.target === veil) closeMessage()
+      })
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !veil.classList.contains('is-hidden')) closeMessage()
+      })
+      window.addEventListener('DOMContentLoaded', () => closeButton.focus(), { once: true })
+    </script>
+  </body>
+</html>
